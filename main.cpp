@@ -87,59 +87,65 @@ bool NAKED is_zero_page(PVOID page)
 
 NTSTATUS DriverEntry()
 {
-
 	PHYSICAL_MEMORY_RANGE safe_range[2];
-    ReclaimFirmwareMemory(&safe_range[0], &safe_range[1]);
-
-	auto rva = MmMapIoSpace(safe_range[0].BaseAddress.QuadPart, safe_range[0].NumberOfBytes.QuadPart, MmNonCached);
-
-    int largest_zero_range = 0;
-	int current_zero_range = 0;
-	UINT64 largest_zero_range_start = 0;
-    for(UINT64 current = (UINT64)rva; current < (UINT64)rva + safe_range[0].NumberOfBytes.QuadPart; current += 4096)
+    if (ReclaimFirmwareMemory(&safe_range[0], &safe_range[1]))
     {
-        if (is_zero_page((PVOID)current))
+        auto rva = MmMapIoSpace(safe_range[0].BaseAddress.QuadPart, safe_range[0].NumberOfBytes.QuadPart, MmNonCached);
+        if (rva)
         {
-            current_zero_range++;
-        }
-        else
-        {
-            if (current_zero_range > largest_zero_range)
+            int largest_zero_range = 0;
+            int current_zero_range = 0;
+            UINT64 largest_zero_range_start = 0;
+            for (UINT64 current = (UINT64)rva; current < (UINT64)rva + safe_range[0].NumberOfBytes.QuadPart; current += 4096)
             {
-                largest_zero_range = current_zero_range;
-                largest_zero_range_start = (current - (current_zero_range * 4096)) - (UINT64)rva + safe_range[0].BaseAddress.QuadPart;
-			}
-            current_zero_range = 0;
-		}
-    }
-    MmUnmapIoSpace((PVOID)rva, safe_range[0].NumberOfBytes.QuadPart);
-
-    rva = MmMapIoSpace(safe_range[1].BaseAddress.QuadPart, safe_range[1].NumberOfBytes.QuadPart, MmNonCached);
-	printf("range 0: %p %d pages\n", largest_zero_range_start, largest_zero_range);
-
-    largest_zero_range = 0;
-    current_zero_range = 0;
-    largest_zero_range_start = 0;
-    for (UINT64 current = (UINT64)rva; current < (UINT64)rva + safe_range[1].NumberOfBytes.QuadPart; current += 4096)
-    {
-        if (is_zero_page((PVOID)current))
-        {
-            current_zero_range++;
-        }
-        else
-        {
-            if (current_zero_range > largest_zero_range)
-            {
-                largest_zero_range = current_zero_range;
-                largest_zero_range_start = (current - (current_zero_range * 4096)) - (UINT64)rva + safe_range[1].BaseAddress.QuadPart;
+                if (is_zero_page((PVOID)current))
+                {
+                    current_zero_range++;
+                }
+                else
+                {
+                    if (current_zero_range > largest_zero_range)
+                    {
+                        largest_zero_range = current_zero_range;
+                        largest_zero_range_start = (current - (current_zero_range * 4096)) - (UINT64)rva + safe_range[0].BaseAddress.QuadPart;
+                    }
+                    current_zero_range = 0;
+                }
             }
-            current_zero_range = 0;
+
+            printf("range 0: %p %d pages\n", largest_zero_range_start, largest_zero_range);
+
+            MmUnmapIoSpace((PVOID)rva, safe_range[0].NumberOfBytes.QuadPart);
+        }
+
+
+        rva = MmMapIoSpace(safe_range[1].BaseAddress.QuadPart, safe_range[1].NumberOfBytes.QuadPart, MmNonCached);
+        if (rva)
+        {
+            int largest_zero_range = 0;
+            int current_zero_range = 0;
+            UINT64 largest_zero_range_start = 0;
+            for (UINT64 current = (UINT64)rva; current < (UINT64)rva + safe_range[1].NumberOfBytes.QuadPart; current += 4096)
+            {
+                if (is_zero_page((PVOID)current))
+                {
+                    current_zero_range++;
+                }
+                else
+                {
+                    if (current_zero_range > largest_zero_range)
+                    {
+                        largest_zero_range = current_zero_range;
+                        largest_zero_range_start = (current - (current_zero_range * 4096)) - (UINT64)rva + safe_range[1].BaseAddress.QuadPart;
+                    }
+                    current_zero_range = 0;
+                }
+            }
+
+            printf("range 1: %p %d pages\n", largest_zero_range_start, largest_zero_range);
+
+            MmUnmapIoSpace((PVOID)rva, safe_range[1].NumberOfBytes.QuadPart);
         }
     }
-
-    printf("range 1: %p %d pages\n", largest_zero_range_start, largest_zero_range);
-
-	MmUnmapIoSpace((PVOID)rva, safe_range[1].NumberOfBytes.QuadPart);
-
     return STATUS_SUCCESS;
 }
