@@ -1441,23 +1441,21 @@ struct _MMPTE_HARDWARE
         UINT64 AsUINT64;
         struct
         {
-            ULONGLONG Valid : 1;               // 0x0
-            ULONGLONG Dirty1 : 1;              // 0x0
-            ULONGLONG Owner : 1;               // 0x0
-            ULONGLONG WriteThrough : 1;        // 0x0
-            ULONGLONG CacheDisable : 1;        // 0x0
-            ULONGLONG Accessed : 1;            // 0x0
-            ULONGLONG Dirty : 1;               // 0x0
-            ULONGLONG LargePage : 1;           // 0x0
-            ULONGLONG Global : 1;              // 0x0
-            ULONGLONG CopyOnWrite : 1;         // 0x0
-            ULONGLONG Unused : 1;              // 0x0
-            ULONGLONG Write : 1;               // 0x0
-            ULONGLONG PageFrameNumber : 40;    // 0x0
-            ULONGLONG ReservedForSoftware : 4; // 0x0
-            ULONGLONG WsleAge : 4;             // 0x0
-            ULONGLONG WsleProtection : 3;      // 0x0
-            ULONGLONG NoExecute : 1;           // 0x0
+            ULONGLONG Valid : 1;                                                      //0x0
+            ULONGLONG Write : 1;                                                      //0x0
+            ULONGLONG Owner : 1;                                                      //0x0
+            ULONGLONG WriteThrough : 1;                                               //0x0
+            ULONGLONG CacheDisable : 1;                                               //0x0
+            ULONGLONG Accessed : 1;                                                   //0x0
+            ULONGLONG Dirty : 1;                                                      //0x0
+            ULONGLONG LargePage : 1;                                                  //0x0
+            ULONGLONG Global : 1;                                                     //0x0
+            ULONGLONG CopyOnWrite : 1;                                                //0x0
+            ULONGLONG Prototype : 1;                                                  //0x0
+            ULONGLONG reserved0 : 1;                                                  //0x0
+            ULONGLONG PageFrameNumber : 40;                                           //0x0
+            ULONGLONG SoftwareWsIndex : 11;                                           //0x0
+            ULONGLONG NoExecute : 1;                                                  //0x0
         };
     };
 };
@@ -2169,3 +2167,121 @@ struct _KAPC_STATE
         };
     };
 };
+
+typedef struct _IMAGE_SECTION_HEADER
+{
+    UINT8 Name[8];
+    union
+    {
+        UINT32 PhysicalAddress;
+        UINT32 VirtualSize;
+    } Misc;
+    UINT32 VirtualAddress;
+    UINT32 SizeOfRawData;
+    UINT32 PointerToRawData;
+    UINT32 PointerToRelocations;
+    UINT32 PointerToLinenumbers;
+    UINT16 NumberOfRelocations;
+    UINT16 NumberOfLinenumbers;
+    UINT32 Characteristics;
+} IMAGE_SECTION_HEADER, * PIMAGE_SECTION_HEADER;
+
+typedef struct _IMAGE_DOS_HEADER
+{
+    UINT16 e_magic;
+    UINT16 e_cblp;
+    UINT16 e_cp;
+    UINT16 e_crlc;
+    UINT16 e_cparhdr;
+    UINT16 e_minalloc;
+    UINT16 e_maxalloc;
+    UINT16 e_ss;
+    UINT16 e_sp;
+    UINT16 e_csum;
+    UINT16 e_ip;
+    UINT16 e_cs;
+    UINT16 e_lfarlc;
+    UINT16 e_ovno;
+    UINT16 e_res[4];
+    UINT16 e_oemid;
+    UINT16 e_oeminfo;
+    UINT16 e_res2[10];
+    INT32 e_lfanew;
+} IMAGE_DOS_HEADER, * PIMAGE_DOS_HEADER;
+
+typedef struct _IMAGE_EXPORT_DIRECTORY
+{
+    UINT32 Characteristics;
+    UINT32 TimeDateStamp;
+    UINT16 MajorVersion;
+    UINT16 MinorVersion;
+    UINT32 Name;
+    UINT32 Base;
+    UINT32 NumberOfFunctions;
+    UINT32 NumberOfNames;
+    UINT32 AddressOfFunctions;
+    UINT32 AddressOfNames;
+    UINT32 AddressOfNameOrdinals;
+} IMAGE_EXPORT_DIRECTORY, * PIMAGE_EXPORT_DIRECTORY;
+
+typedef struct _IMAGE_FILE_HEADER
+{
+    UINT16 Machine;
+    UINT16 NumberOfSections;
+    UINT32 TimeDateStamp;
+    UINT32 PointerToSymbolTable;
+    UINT32 NumberOfSymbols;
+    UINT16 SizeOfOptionalHeader;
+    UINT16 Characteristics;
+} IMAGE_FILE_HEADER, * PIMAGE_FILE_HEADER;
+
+typedef struct _IMAGE_DATA_DIRECTORY
+{
+    UINT32 VirtualAddress;
+    UINT32 Size;
+} IMAGE_DATA_DIRECTORY, * PIMAGE_DATA_DIRECTORY;
+
+typedef struct _IMAGE_OPTIONAL_HEADER64
+{
+    UINT16 Magic;
+    UINT8 MajorLinkerVersion;
+    UINT8 MinorLinkerVersion;
+    UINT32 SizeOfCode;
+    UINT32 SizeOfInitializedData;
+    UINT32 SizeOfUninitializedData;
+    UINT32 AddressOfEntryPoint;
+    UINT32 BaseOfCode;
+    UINT64 ImageBase;
+    UINT32 SectionAlignment;
+    UINT32 FileAlignment;
+    UINT16 MajorOperatingSystemVersion;
+    UINT16 MinorOperatingSystemVersion;
+    UINT16 MajorImageVersion;
+    UINT16 MinorImageVersion;
+    UINT16 MajorSubsystemVersion;
+    UINT16 MinorSubsystemVersion;
+    UINT32 Win32VersionValue;
+    UINT32 SizeOfImage;
+    UINT32 SizeOfHeaders;
+    UINT32 CheckSum;
+    UINT16 Subsystem;
+    UINT16 DllCharacteristics;
+    UINT64 SizeOfStackReserve;
+    UINT64 SizeOfStackCommit;
+    UINT64 SizeOfHeapReserve;
+    UINT64 SizeOfHeapCommit;
+    UINT32 LoaderFlags;
+    UINT32 NumberOfRvaAndSizes;
+    IMAGE_DATA_DIRECTORY DataDirectory[16];
+} IMAGE_OPTIONAL_HEADER64, * PIMAGE_OPTIONAL_HEADER64;
+
+typedef char* NTSTRSAFE_PSTR;
+typedef const char* NTSTRSAFE_PCSTR;
+
+typedef struct _IMAGE_NT_HEADERS64
+{
+    UINT32 Signature;
+    IMAGE_FILE_HEADER FileHeader;
+    IMAGE_OPTIONAL_HEADER64 OptionalHeader;
+} IMAGE_NT_HEADERS64, * PIMAGE_NT_HEADERS64, IMAGE_NT_HEADERS, * PIMAGE_NT_HEADERS;
+

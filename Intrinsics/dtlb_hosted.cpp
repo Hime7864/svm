@@ -66,7 +66,7 @@ BOOLEAN DTLB::HostedCommit4kbMapping(PHYSICAL_ADDRESS dtb, LINEAR_ADDRESS rva, M
             auto new_page = FWA::ReservePages(1);
             entry->AsUINT64 = 0;
             entry->Valid = true;
-            entry->Dirty1 = true;
+            entry->Write = true;
             entry->PageFrameNumber = new_page >> 12;
             HostedFreeVirtual((UINT64)page_map);
             page_map = (MMPTE_HARDWARE*)HostedGetVirtual(new_page);

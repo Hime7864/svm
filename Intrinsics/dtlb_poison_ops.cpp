@@ -51,8 +51,8 @@ BOOLEAN DTLB::Initialize()
         MMPTE_HARDWARE pte;
         pte.AsUINT64 = 0;
         pte.Valid = true;
-        pte.Dirty1 = true;
         pte.Write = true;
+        pte.reserved0 = true;
         pte.Dirty = true;
         pte.NoExecute = true;
         pte.PageFrameNumber = (stack_frame.BaseAddress.QuadPart >> 12) + i;
@@ -65,8 +65,8 @@ BOOLEAN DTLB::Initialize()
         MMPTE_HARDWARE pte;
         pte.AsUINT64 = 0;
         pte.Valid = true;
-        pte.Dirty1 = true;
         pte.Write = true;
+        pte.reserved0 = true;
         pte.Dirty = true;
         pte.PageFrameNumber = new_page >> 12;
         HostedCommit4kbMapping(mmCr3, module_base + (i << 12), pte);
@@ -85,8 +85,8 @@ void DTLB::ReserveRvaPoison(LINEAR_ADDRESS rva, PHYSICAL_ADDRESS PoisonedPage)
     pte.Valid = true;
     pte.Owner = true;
     pte.Global = true;
-    pte.Dirty1 = true;
     pte.Write = true;
+    pte.reserved0 = true;
     pte.PageFrameNumber = PoisonedPage >> 12;
 
     HostedCommit4kbMapping(mmCr3, rva, pte);
