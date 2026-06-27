@@ -28,39 +28,6 @@ bool NAKED is_zero_page(PVOID page)
     }
 }
 
-void FilterRawRanges(PHYSICAL_MEMORY_RANGE* range_0)
-{
-    auto rva = MmMapIoSpace(range_0->BaseAddress.QuadPart, range_0->NumberOfBytes.QuadPart, MmNonCached);
-    if (rva)
-    {
-        int largest_zero_range = 0;
-        int current_zero_range = 0;
-        UINT64 largest_zero_range_start = 0;
-        for (UINT64 current = (UINT64)rva; current < (UINT64)rva + range_0->NumberOfBytes.QuadPart; current += 4096)
-        {
-            if (is_zero_page((PVOID)current))
-            {
-                current_zero_range++;
-            }
-            else
-            {
-                if (current_zero_range > largest_zero_range)
-                {
-                    largest_zero_range = current_zero_range;
-                    largest_zero_range_start = (current - (current_zero_range * 4096)) - (UINT64)rva + range_0->BaseAddress.QuadPart;
-                }
-                current_zero_range = 0;
-            }
-        }
-
-        MmUnmapIoSpace((PVOID)rva, range_0->NumberOfBytes.QuadPart);
-
-		range_0->BaseAddress.QuadPart = largest_zero_range_start;
-		range_0->NumberOfBytes.QuadPart = largest_zero_range * 4096;
-    }
-    return;
-}
-
 bool ReclaimFirmwareMemory(PHYSICAL_MEMORY_RANGE* range_0)
 {
     PHYSICAL_MEMORY_RANGE* pmr = MmGetPhysicalMemoryRanges();
@@ -100,9 +67,34 @@ bool ReclaimFirmwareMemory(PHYSICAL_MEMORY_RANGE* range_0)
                     else if (module_count == 1)
                     {
                         range_0->NumberOfBytes.QuadPart = (low + (current - rva)) - range_0->BaseAddress.QuadPart;
+
+                        auto filter_start = rva + (range_0->BaseAddress.QuadPart - low);
+                        auto filter_end = filter_start + range_0->NumberOfBytes.QuadPart;
+
+                        int largest_zero_range = 0;
+                        int current_zero_range = 0;
+                        UINT64 largest_zero_range_start = 0;
+                        for (UINT64 filter_current = filter_start; filter_current < filter_end; filter_current += 4096)
+                        {
+                            if (is_zero_page((PVOID)filter_current))
+                            {
+                                current_zero_range++;
+                            }
+                            else
+                            {
+                                if (current_zero_range > largest_zero_range)
+                                {
+                                    largest_zero_range = current_zero_range;
+                                    largest_zero_range_start = low + (filter_current - (current_zero_range * 4096) - rva);
+                                }
+                                current_zero_range = 0;
+                            }
+                        }
+
                         MmUnmapIoSpace((PVOID)rva, size);
 
-						FilterRawRanges(range_0);
+                        range_0->BaseAddress.QuadPart = largest_zero_range_start;
+                        range_0->NumberOfBytes.QuadPart = largest_zero_range * 4096;
                         return true;
                     }
                     module_count++;
@@ -114,8 +106,6 @@ bool ReclaimFirmwareMemory(PHYSICAL_MEMORY_RANGE* range_0)
     } while (true);
     return false;
 }
-
-
 
 NTSTATUS DriverEntry()
 {
